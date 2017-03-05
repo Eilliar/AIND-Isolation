@@ -38,8 +38,8 @@ def custom_score(game, player):
     """
 
     # TODO: finish this function!
-    raise NotImplementedError
-
+    # First heuristic: Number of player available moves
+    return len(game.get_legal_moves())
 
 class CustomPlayer:
     """Game-playing agent that chooses a move using your evaluation function
@@ -123,20 +123,27 @@ class CustomPlayer:
         # Perform any required initializations, including selecting an initial
         # move from the game board (i.e., an opening book), or returning
         # immediately if there are no legal moves
+        if not legal_moves:
+            return (-1, -1)
+        
+        # Do I need to check if it's first move?
+        if (len(game.get_legal_moves()) == (game.width * game.height) ):
+            # If available moves are all the board squares get the center position
+            return (int(game.width/2), int(game.height/2))
 
         try:
             # The search method call (alpha beta or minimax) should happen in
             # here in order to avoid timeout. The try/except block will
             # automatically catch the exception raised by the search method
             # when the timer gets close to expiring
-            pass
+            _, move = self.minimax(self, game, depth = 1)
 
         except Timeout:
             # Handle any actions required at timeout, if necessary
-            pass
+            print("Timeout excpetion on get_move().")
 
         # Return the best move from the last completed search iteration
-        raise NotImplementedError
+        return move
 
     def minimax(self, game, depth, maximizing_player=True):
         """Implement the minimax search algorithm as described in the lectures.
@@ -173,7 +180,47 @@ class CustomPlayer:
             raise Timeout()
 
         # TODO: finish this function!
-        raise NotImplementedError
+        # Define default move and get all available legal moves
+        no_move = (-1, -1)
+        legal_moves = game.get_legal_moves(self)
+        
+        # Check if depth is 0
+        # Is it necessary to check if reached a Terminal Node -> len(game.get_legal_moves(self)) == 0 ?
+        if (depth == 0) or (len(legal_moves) == 0):
+            # If no legal move available shouldn't be using game.utility(self), since it's the end of the game?
+            return self.score(game, self), no_move
+        
+        # Maximizing Player
+        if maximizing_player:
+            # Defaults
+            bestValue = float("-inf")
+            bestMove = no_move
+            # Loop over all possible children nodes
+            for child in legal_moves:
+                # Recursive minimax, decrease depth and flip player
+                v, move = self.minimax(game.forecast_move(child), depth -1, not(maximizing_player))
+                # Update bestValue and bestMove
+                if v > bestValue:
+                    bestValue = v
+                    bestMove = child
+
+            return bestValue, bestMove
+        # Minimizing Player
+        else:
+            # Defaults
+            bestValue = float("inf")
+            bestMove = no_move
+            # Loop over all possible children nodes
+            for child in legal_moves:
+                # Recursive minimax, decrease depth and flip player
+                v, move = self.minimax(game.forecast_move(child), depth -1, not(maximizing_player))
+                if v < bestValue:
+                    bestValue = v
+                    bestMove = child
+
+            return bestValue, bestMove
+
+
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
         """Implement minimax search with alpha-beta pruning as described in the
