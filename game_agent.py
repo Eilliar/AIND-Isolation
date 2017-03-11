@@ -136,7 +136,7 @@ class CustomPlayer:
             # here in order to avoid timeout. The try/except block will
             # automatically catch the exception raised by the search method
             # when the timer gets close to expiring
-            _, move = self.minimax(self, game, depth = 1)
+            _, move = self.minimax(game, 1)
 
         except Timeout:
             # Handle any actions required at timeout, if necessary
@@ -182,11 +182,11 @@ class CustomPlayer:
         # TODO: finish this function!
         # Define default move and get all available legal moves
         no_move = (-1, -1)
-        legal_moves = game.get_legal_moves(self)
+        legal_moves = game.get_legal_moves()
         
         # Check if depth is 0
         # Is it necessary to check if reached a Terminal Node -> len(game.get_legal_moves(self)) == 0 ?
-        if (depth == 0) or (len(legal_moves) == 0):
+        if (depth == 0):
             # If no legal move available shouldn't be using game.utility(self), since it's the end of the game?
             return self.score(game, self), no_move
         
@@ -264,4 +264,45 @@ class CustomPlayer:
             raise Timeout()
 
         # TODO: finish this function!
-        raise NotImplementedError
+        # Define default move and get all available legal moves
+        no_move = (-1, -1)
+        legal_moves = game.get_legal_moves()
+
+        if (depth == 0) or (len(legal_moves) == 0):
+            return self.score(game, self), no_move
+
+        # Maximizing Player
+        if maximizing_player:
+            # Defaults
+            bestValue = float("-inf")
+            bestMove = no_move
+            # Loop over all possible children nodes
+            for child in legal_moves:
+                v, move = self.alphabeta(game.forecast_move(child), depth -1, alpha, beta, not(maximizing_player))
+                # max(bestValue, v)
+                if (v > bestValue):
+                    bestValue = v
+                    bestMove = child
+                # Update Alpha
+                alpha = max(alpha, bestValue)
+                if beta <= alpha:
+                    break
+            return bestValue, bestMove
+        
+        # Minimizing Player
+        else:
+            # Defaults
+            bestValue = float("inf")
+            bestMove = no_move
+            # Loop over all possible children nodes
+            for child in legal_moves:
+                v, move = self.alphabeta(game.forecast_move(child), depth -1, alpha, beta, not(maximizing_player))
+                # min(bestValue, v)
+                if (v < bestValue):
+                    bestValue = v
+                    bestMove = move
+                # Update Beta
+                beta = min(beta, bestValue)
+                if beta <= alpha:
+                    break
+            return bestValue, bestMove
