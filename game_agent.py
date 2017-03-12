@@ -13,6 +13,39 @@ class Timeout(Exception):
     """Subclass base exception for code clarity."""
     pass
 
+def aggressive_chaser(game, player, weight_opp = 2):
+    """Score function for an aggressive chaser. Something like the 
+    chaser that we saw on lecture videos, but can make it more aggressive 
+    pennalizing heavily number of opponent moves.
+
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : hashable
+        One of the objects registered by the game object as a valid player.
+        (i.e., `player` should be either game.__player_1__ or
+        game.__player_2__).
+
+    weight_opp : int
+        penalization weight on number of opponent moves
+
+    Returns
+    ----------
+    float
+        The heuristic value of the current game state"""
+
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    return float(own_moves - weight_opp*opp_moves)
 
 def custom_score(game, player):
     """Calculate the heuristic value of a game state from the point of view
@@ -45,8 +78,9 @@ def custom_score(game, player):
         return float("inf")
 
     # First heuristic: Number of player available moves
-    return float(len(game.get_legal_moves()))
-
+    #return float(len(game.get_legal_moves()))
+    # Second heuristic: Aggressive Chaser
+    return aggressive_chaser(game, player)
 
 
 class CustomPlayer:
@@ -156,10 +190,10 @@ class CustomPlayer:
             # Perform Iterative Deepening Search
             if self.iterative:
                 for i in itertools.count():
-                    score, move = search(game, i+1, True)
+                    v, move = search(game, i+1, True)
             else:
                 # Perform Non-Iterative Deepening Search
-                score, move = search(game, self.search_depth, True)
+                v, move = search(game, self.search_depth, True)
 
         except Timeout:
             # Handle any actions required at timeout, if necessary
