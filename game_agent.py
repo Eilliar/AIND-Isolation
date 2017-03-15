@@ -13,6 +13,87 @@ class Timeout(Exception):
     """Subclass base exception for code clarity."""
     pass
 
+def percent_occupation(game):
+    """
+    Checks percentage of occupied space in the board.
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    Returns
+    -------
+    int
+        The percentage of occupied space in the board
+    """
+    blank_spaces = game.get_blank_spaces()
+    return 1.*(len(blank_spaces)/float((game.width * game.height)))
+
+def distance_to_opponent(game, player):
+    """
+    Checks player distance to opponent using the Taxicab Distance.
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+    
+    player : hashable
+        One of the objects registered by the game object as a valid player.
+        (i.e., `player` should be either game.__player_1__ or
+        game.__player_2__).
+
+    Returns
+    -------
+    int
+        The player distance to opponent
+    """
+    # Get Player's position
+    (x0, x1) = game.get_player_location(player)
+    # Get Opponent's position
+    (y0, y1) = game.get_player_location(game.get_opponent(player))
+    
+    # Taxicab Distance
+    return abs(x0 - y0) + abs(x1 - y1)
+
+def third_heuristic(game, player):
+    """
+
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : hashable
+        One of the objects registered by the game object as a valid player.
+        (i.e., `player` should be either game.__player_1__ or
+        game.__player_2__).
+
+    weight_opp : int
+        penalization weight on number of opponent moves
+
+    Returns
+    ----------
+    float
+        The heuristic value of the current game state
+    """
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    # Taxicab Distance between the two players
+    distance = distance_to_opponent(game, player)
+    # Board percentual occupation
+    occupation = percent_occupation(game)
+
+    return float(own_moves + distance - occupation - opp_moves)
+    
 def aggressive_chaser(game, player, weight_opp = 2):
     """Score function for an aggressive chaser. Something like the 
     chaser that we saw on lecture videos, but can make it more aggressive 
@@ -35,13 +116,8 @@ def aggressive_chaser(game, player, weight_opp = 2):
     Returns
     ----------
     float
-        The heuristic value of the current game state"""
-
-    if game.is_loser(player):
-        return float("-inf")
-
-    if game.is_winner(player):
-        return float("inf")
+        The heuristic value of the current game state
+    """
 
     own_moves = len(game.get_legal_moves(player))
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
@@ -80,7 +156,9 @@ def custom_score(game, player):
     # First heuristic: Number of player available moves
     #return float(len(game.get_legal_moves()))
     # Second heuristic: Aggressive Chaser
-    return aggressive_chaser(game, player)
+    #return aggressive_chaser(game, player)
+    # Third heuristic:
+    return third_heuristic(game, player)
 
 
 class CustomPlayer:
@@ -208,7 +286,7 @@ class CustomPlayer:
         legal_moves = game.get_legal_moves()
         
         if (depth == 0):
-            # If no legal move available shouldn't be using game.utility(self), since it's the end of the game?
+            # Get the Score
             return self.score(game, self), no_move
 
         # Maximizing Player
