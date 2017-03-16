@@ -28,7 +28,7 @@ def percent_occupation(game):
         The percentage of occupied space in the board
     """
     blank_spaces = game.get_blank_spaces()
-    return 1.*(len(blank_spaces)/float((game.width * game.height)))
+    return (len(blank_spaces)/float((game.width * game.height)))
 
 def distance_to_opponent(game, player):
     """
@@ -79,11 +79,6 @@ def third_heuristic(game, player):
     float
         The heuristic value of the current game state
     """
-    if game.is_loser(player):
-        return float("-inf")
-
-    if game.is_winner(player):
-        return float("inf")
 
     own_moves = len(game.get_legal_moves(player))
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
@@ -93,7 +88,37 @@ def third_heuristic(game, player):
     occupation = percent_occupation(game)
 
     return float(own_moves + distance - occupation - opp_moves)
+
+def second_heuristic(game, player):
+    """
     
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : hashable
+        One of the objects registered by the game object as a valid player.
+        (i.e., `player` should be either game.__player_1__ or
+        game.__player_2__).
+
+    weight_opp : int
+        penalization weight on number of opponent moves
+
+    Returns
+    ----------
+    float
+        The heuristic value of the current game state
+    """
+    
+    # Available moves
+    own_moves = len(game.get_legal_moves(player))
+    # Board percentual occupation
+    occupation = percent_occupation(game)
+
+    return float(own_moves/occupation)
+
 def aggressive_chaser(game, player, weight_opp = 2):
     """Score function for an aggressive chaser. Something like the 
     chaser that we saw on lecture videos, but can make it more aggressive 
@@ -153,10 +178,10 @@ def custom_score(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    # First heuristic: Number of player available moves
-    #return float(len(game.get_legal_moves()))
-    # Second heuristic: Aggressive Chaser
-    #return aggressive_chaser(game, player)
+    # First heuristic: Aggressive Chaser
+    # return aggressive_chaser(game, player)
+    # Second heuristic:
+    #return second_heuristic(game, player)
     # Third heuristic:
     return third_heuristic(game, player)
 
